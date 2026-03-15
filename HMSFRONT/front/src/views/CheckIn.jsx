@@ -16,6 +16,7 @@ const CheckIn = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [activeRes, setActiveRes] = useState(null);
+    const [upcomingRes, setUpcomingRes] = useState([]);
 
     useEffect(() => {
         const fetchAvailability = async () => {
@@ -32,8 +33,14 @@ const CheckIn = () => {
                 const current = reservations.find(res => 
                     currentTime >= res.startTime && currentTime < res.endTime
                 );
+
+                // Find upcoming reservations for later today
+                const upcoming = reservations.filter(res => 
+                    res.startTime > currentTime || (current && res.startTime === current.endTime)
+                );
                 
                 setActiveRes(current || null);
+                setUpcomingRes(upcoming);
             } catch (err) {
                 console.error("Failed to fetch desk availability", err);
                 setError("Failed to load desk information.");
@@ -150,7 +157,7 @@ const CheckIn = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="text-center py-2 space-y-2">
+                                    <div className="text-center py-4 space-y-2">
                                         <div className="w-12 h-12 bg-slate-100 rounded-full mx-auto flex items-center justify-center text-slate-400">
                                             <Clock size={20} />
                                         </div>
@@ -158,6 +165,35 @@ const CheckIn = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Upcoming Reservations List */}
+                            {upcomingRes.length > 0 && (
+                                <div className="text-left space-y-3 pt-2">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Later Today</h3>
+                                    <div className="space-y-2">
+                                        {upcomingRes.map((res, idx) => (
+                                            <div key={idx} className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 overflow-hidden">
+                                                        <img 
+                                                            src={`https://ui-avatars.com/api/?name=${res.username}&background=random`} 
+                                                            alt={res.username}
+                                                            className="w-full h-full opacity-80"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[13px] font-bold text-slate-700">{res.username}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Upcoming</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-[11px] font-black text-primary-600 bg-primary-50 px-2.5 py-1.5 rounded-lg">
+                                                    {res.startTime} - {res.endTime}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {error && (
                                 <motion.div 
