@@ -1,15 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, AlertCircle, Loader2, QrCode, ArrowLeft } from 'lucide-react';
-import { checkInTable } from '../api';
+import { CheckCircle2, AlertCircle, Loader2, QrCode, ArrowLeft, Clock, User } from 'lucide-react';
+import { checkInTable, getTableAvailability } from '../api';
+import { useAuth } from '../context/AuthContext';
+import { format } from 'date-fns';
 
 const CheckIn = () => {
     const { deskId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
+    
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [activeRes, setActiveRes] = useState(null);
+
+    useEffect(() => {
+        const fetchAvailability = async () => {
+            try {
+                const today = format(new Date(), 'yyyy-MM-dd');
+                const response = await getTableAvailability(deskId, today);
+                const reservations = response.data.data.reservations || [];
+                
+                const now = new Date();
+                const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                
+                // Find reservation that is currently active or will be active very soon
+                const current = reservations.find(res => 
+                    currentTime >= res.startTime && currentTime <= res.endTime
+                );
+                
+                setActiveRes(current || null);
+            } catch (err) {
+                console.error("Failed to fetch desk availability", err);
+                setError("Failed to load desk information.");
+            } finally {
+                setFetching(false);
+            }
+        };
+        fetchAvailability();
+    }, [deskId]);
 
     const handleCheckIn = async () => {
         setLoading(true);
@@ -24,6 +56,8 @@ const CheckIn = () => {
         }
     };
 
+    const isReservedByMe = activeRes && activeRes.username === user?.username;
+
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6">
             <motion.div 
@@ -32,7 +66,18 @@ const CheckIn = () => {
                 className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-12 card-shadow border border-slate-50 text-center relative overflow-hidden"
             >
                 <AnimatePresence mode="wait">
-                    {success ? (
+                    {fetching ? (
+                        <motion.div 
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center py-10 gap-4"
+                        >
+                            <Loader2 size={40} className="animate-spin text-primary-500" />
+                            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Checking desk status...</p>
+                        </motion.div>
+                    ) : success ? (
                         <motion.div 
                             key="success"
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -74,6 +119,41 @@ const CheckIn = () => {
                                 </div>
                             </div>
 
+                            {/* Reservation Details Card */}
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-left space-y-4">
+                                {activeRes ? (
+                                    <>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex flex-shrink-0 items-center justify-center overflow-hidden">
+                                                <img 
+                                                    src={`https://ui-avatars.com/api/?name=${activeRes.username}&background=random`} 
+                                                    alt={activeRes.username}
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-slate-400 uppercase">Reserved By</p>
+                                                <p className="text-sm font-black text-slate-800 truncate">{activeRes.username} {isReservedByMe ? '(You)' : ''}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-slate-600 font-bold bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                            <Clock size={16} className="text-primary-400" />
+                                            <span className="text-sm">{activeRes.startTime} - {activeRes.endTime}</span>
+                                            {activeRes.status === 'occupied' && (
+                                                <span className="ml-auto text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md uppercase tracking-wider">Checked In</span>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-2 space-y-2">
+                                        <div className="w-12 h-12 bg-slate-100 rounded-full mx-auto flex items-center justify-center text-slate-400">
+                                            <Clock size={20} />
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-500">No active reservation at this time.</p>
+                                    </div>
+                                )}
+                            </div>
+
                             {error && (
                                 <motion.div 
                                     initial={{ opacity: 0, height: 0 }}
@@ -88,14 +168,24 @@ const CheckIn = () => {
                             <div className="pt-4">
                                 <button
                                     onClick={handleCheckIn}
-                                    disabled={loading}
-                                    className="w-full bg-primary-600 hover:bg-primary-700 text-white font-black py-6 rounded-3xl transition-all shadow-xl shadow-primary-500/30 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 text-lg uppercase tracking-widest"
+                                    disabled={loading || !activeRes || !isReservedByMe || activeRes.status === 'occupied'}
+                                    className={`w-full font-black py-6 rounded-3xl transition-all flex items-center justify-center gap-3 text-lg uppercase tracking-widest ${
+                                        (!activeRes || !isReservedByMe || activeRes.status === 'occupied') 
+                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none border border-slate-200' 
+                                        : 'bg-primary-600 hover:bg-primary-700 text-white shadow-xl shadow-primary-500/30 active:scale-95'
+                                    }`}
                                 >
                                     {loading ? (
                                         <>
                                             <Loader2 size={24} className="animate-spin" />
                                             Processing...
                                         </>
+                                    ) : !activeRes ? (
+                                        'Not Available'
+                                    ) : !isReservedByMe ? (
+                                        'Reserved By Others'
+                                    ) : activeRes.status === 'occupied' ? (
+                                        'Already Checked-In'
                                     ) : (
                                         'Check-in Now'
                                     )}
