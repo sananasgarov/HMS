@@ -172,17 +172,20 @@ const checkIn = async (req, res) => {
     try {
         const { tableName } = req.params;
         const username = req.user.username;
+        const { currentTime, currentDate } = req.body;
+        
+        // Use client time if provided, otherwise fallback to server time
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const todayStr = currentDate || now.toISOString().split('T')[0];
+        const checkTime = currentTime || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         // Find an active reservation for this table and user
         const reservation = await Reservation.findOne({
             tableName,
             username,
             date: todayStr,
-            startTime: { $lte: currentTime },
-            endTime: { $gt: currentTime }
+            startTime: { $lte: checkTime },
+            endTime: { $gt: checkTime }
         });
 
         if (!reservation) {

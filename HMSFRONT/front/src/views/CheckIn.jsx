@@ -48,7 +48,11 @@ const CheckIn = () => {
         setLoading(true);
         setError('');
         try {
-            await checkInTable(deskId);
+            const now = new Date();
+            const clientDateStr = format(now, 'yyyy-MM-dd');
+            const clientTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            await checkInTable(deskId, clientTimeStr, clientDateStr);
             setSuccess(true);
         } catch (err) {
             setError(err.response?.data?.message || 'Check-in failed. Make sure you have an active reservation for this desk.');
