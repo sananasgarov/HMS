@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutGrid, Users, LogOut, X } from 'lucide-react';
+import { LayoutGrid, Users, Layout, LogOut, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { logout as logoutAPI } from '../api';
 
@@ -17,6 +17,7 @@ const MobileNav = ({ isOpen, onClose }) => {
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/' },
     { icon: Users, label: 'Team', path: '/teams' },
+    { icon: Layout, label: 'Hackathons', path: '/hackathons' },
   ];
 
   return (
