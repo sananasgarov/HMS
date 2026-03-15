@@ -448,9 +448,14 @@ const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-slate-800 truncate">{occ.username}</p>
-                            <p className="text-[10px] font-black text-primary-500 uppercase flex items-center gap-1">
-                                <MapIcon size={10} /> {occ.tableName}
-                            </p>
+                            <div className="flex items-center gap-3">
+                                <p className="text-[10px] font-black text-primary-500 uppercase flex items-center gap-1">
+                                    <MapIcon size={10} /> {occ.tableName}
+                                </p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1">
+                                    <Clock size={10} /> {occ.startTime} - {occ.endTime}
+                                </p>
+                            </div>
                         </div>
                     </motion.div>
                 ));
