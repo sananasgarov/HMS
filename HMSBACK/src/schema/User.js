@@ -22,7 +22,9 @@ const userSchema = new mongoose.Schema({
         select: false
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    bufferCommands: false,
+    autoCreate: false
 });
 userSchema.pre("save", async function() {
     if (!this.isModified("password")) return;

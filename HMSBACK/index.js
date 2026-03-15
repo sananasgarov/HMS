@@ -1,10 +1,25 @@
 const express = require('express');
+const mongoose = require('mongoose');
+
+// CRITICAL: DISABLE BUFFERING AT THE ENTRY POINT
+mongoose.set('bufferCommands', false);
+
 const app = express();
 const port = 3000;
 const cors = require("cors");
 const router = require("./src/router/index");
+
+app.get('/health', async (req, res) => {
+  const state = mongoose.connection.readyState;
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.json({
+    status: true,
+    database: states[state],
+    time: new Date().toISOString()
+  });
+});
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: true, // Allow all origins for now to fix connection issues
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -47,8 +62,18 @@ app.use(hpp());
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 const db = require("./src/db/index");
+// Ensure DB connection before any API request
+app.use(async (req, res, next) => {
+  try {
+    await db();
+    next();
+  } catch (err) {
+    res.status(500).json({ status: false, message: "Database connection failed" });
+  }
+});
+
 app.use("/api", router);
-db();
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
