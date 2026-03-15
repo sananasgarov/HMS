@@ -8,6 +8,7 @@ const db = async () => {
 
     try {
         const connUrl = config.mongodb.url.replace("<password>", config.mongodb.pass);
+        console.log("Connecting to:", connUrl.replace(/:([^@]+)@/, ':****@'));
         
         // Disable buffering globally again just in case
         mongoose.set('bufferCommands', false);
