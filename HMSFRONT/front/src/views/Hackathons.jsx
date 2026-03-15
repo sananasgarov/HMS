@@ -109,6 +109,7 @@ const Hackathons = () => {
                         return (
                             post.title?.toLowerCase().includes(q) ||
                             post.description?.toLowerCase().includes(q) ||
+                            post.lookingFor?.toLowerCase().includes(q) ||
                             post.requiredSkills?.some(skill => skill.toLowerCase().includes(q))
                         );
                     }).map((post, idx) => (
