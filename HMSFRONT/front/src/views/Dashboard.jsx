@@ -420,8 +420,10 @@ const Dashboard = () => {
             
             <div className="space-y-3 overflow-y-auto pr-2 mac-scrollbar max-h-[300px]">
               {(() => {
+                const nowStr = format(new Date(), 'HH:mm');
+                // Show anyone who is currently there or has an upcoming reservation today
                 const occupants = reservations.filter(r => 
-                   filterTime >= r.startTime && filterTime <= r.endTime
+                   r.endTime > nowStr
                 );
                 
                 if (occupants.length === 0) return (

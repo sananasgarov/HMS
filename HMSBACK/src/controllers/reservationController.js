@@ -1,11 +1,16 @@
+const mongoose = require("mongoose");
 const Reservation = require("../schema/Reservation");
 
 const createReservation = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const { tableName, date, startTime, endTime } = req.body;
         const username = req.user.username;
 
         if (!tableName || !date || !startTime || !endTime) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ status: false, message: "Missing required fields" });
         }
 
@@ -15,9 +20,11 @@ const createReservation = async (req, res) => {
         const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         if (date === todayStr && startTime < currentTime) {
-            return res.status(400).json({ 
-                status: false, 
-                message: `Cannot book for the past. Current time is ${currentTime}.` 
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({
+                status: false,
+                message: `Cannot book for the past. Current time is ${currentTime}.`
             });
         }
 
@@ -26,12 +33,14 @@ const createReservation = async (req, res) => {
             username,
             date,
             endTime: { $gt: currentTime }
-        });
+        }).session(session);
 
         if (existingActiveRes) {
-            return res.status(400).json({ 
-                status: false, 
-                message: `You already have an active reservation (${existingActiveRes.tableName} until ${existingActiveRes.endTime}). Please wait until it ends before booking again.` 
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({
+                status: false,
+                message: `You already have an active reservation (${existingActiveRes.tableName} until ${existingActiveRes.endTime}). Please wait until it ends before booking again.`
             });
         }
 
@@ -45,9 +54,11 @@ const createReservation = async (req, res) => {
                     endTime: { $gt: startTime }
                 }
             ]
-        });
+        }).session(session);
 
         if (overlapping) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ status: false, message: "This table is already reserved for the selected time" });
         }
 
@@ -59,9 +70,14 @@ const createReservation = async (req, res) => {
             endTime
         });
 
-        await newReservation.save();
+        await newReservation.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+
         res.status(201).json({ status: true, data: newReservation });
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(500).json({ status: false, message: error.message });
     }
 };
