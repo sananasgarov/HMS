@@ -188,9 +188,9 @@ const Dashboard = () => {
                                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                 className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto p-2 scrollbar-thin"
                             >
-                                {Array.from({ length: 48 }, (_, i) => {
-                                    const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                                    const min = (i % 2 === 0 ? '00' : '30');
+                                {Array.from({ length: 1440 }, (_, i) => {
+                                    const hour = Math.floor(i / 60).toString().padStart(2, '0');
+                                    const min = (i % 60).toString().padStart(2, '0');
                                     const time = `${hour}:${min}`;
                                     return (
                                         <button 
@@ -198,9 +198,9 @@ const Dashboard = () => {
                                             onClick={() => {
                                                 setFilterStartTime(time);
                                                 if (time >= filterEndTime) {
-                                                    const nextI = i < 47 ? i + 1 : 47;
-                                                    const nextHour = Math.floor(nextI / 2).toString().padStart(2, '0');
-                                                    const nextMin = (nextI % 2 === 0 ? '00' : '30');
+                                                    const nextI = i < 1439 ? i + 1 : 1439;
+                                                    const nextHour = Math.floor(nextI / 60).toString().padStart(2, '0');
+                                                    const nextMin = (nextI % 60).toString().padStart(2, '0');
                                                     setFilterEndTime(`${nextHour}:${nextMin}`);
                                                 }
                                                 setIsStartTimePickerOpen(false);

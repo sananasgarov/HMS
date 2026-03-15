@@ -27,9 +27,10 @@ const CheckIn = () => {
                 const now = new Date();
                 const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 
-                // Find reservation that is currently active or will be active very soon
+                // Find reservation that is currently active.
+                // It's strictly less than endTime so back-to-back reservations (e.g., 16:00-17:00 and 17:00-18:00) don't conflict at exactly 17:00.
                 const current = reservations.find(res => 
-                    currentTime >= res.startTime && currentTime <= res.endTime
+                    currentTime >= res.startTime && currentTime < res.endTime
                 );
                 
                 setActiveRes(current || null);
