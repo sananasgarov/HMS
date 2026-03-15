@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #fef2f2;
+  --color-primary-100: #fee2e2;
+  --color-primary-200: #fecaca;
+  --color-primary-300: #fca5a5;
+  --color-primary-400: #f87171;
+  --color-primary-500: #ef4444;
+  --color-primary-600: #dc2626;
+  --color-primary-700: #b91c1c;
+
+  --color-success: #10b981;
+  --color-danger: #e11d48;
+  --color-warning: #f59e0b;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-[#f8fafc] text-[#1e293b] antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .card-shadow {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  }
+  
+  .glass-effect {
+    @apply bg-white/70 backdrop-blur-md border border-white/20;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium;
+  }
+  
+  .sidebar-link-active {
+    @apply bg-primary-50 text-primary-600;
+  }
+
+  .sidebar-link-inactive {
+    @apply text-slate-400 hover:text-slate-600 hover:bg-slate-50;
+  }
+
+  .desk-square {
+    @apply w-12 h-14 rounded-lg transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95;
+  }
+}
+
+@utility mac-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+  }
+}
+
+/* Global scrollbar application */
+* {
+  @apply mac-scrollbar;
+}
