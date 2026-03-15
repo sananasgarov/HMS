@@ -10,6 +10,7 @@ import Login from './views/Login';
 import Register from './views/Register';
 import Teams from './views/Teams';
 import Hackathons from './views/Hackathons';
+import CheckIn from './views/CheckIn';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -61,6 +62,7 @@ const PrivateRoute = ({ children }) => {
             <Route path="/table/:tableId" element={<TableView />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/hackathons" element={<Hackathons />} />
+            <Route path="/checkin/:deskId" element={<CheckIn />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>

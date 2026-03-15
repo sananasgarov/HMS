@@ -9,7 +9,17 @@ const TableCard = ({ tableId, reservations = [], filterTime, onClick, showHighli
   );
 
   const isOccupied = !!currentRes;
-  let bgColor = isOccupied ? (showHighlight ? 'bg-yellow-400' : 'bg-danger') : 'bg-success';
+  let bgColor = 'bg-success';
+  
+  if (isOccupied) {
+    if (showHighlight) {
+      bgColor = 'bg-yellow-400';
+    } else if (currentRes.status === 'occupied') {
+      bgColor = 'bg-danger';
+    } else {
+      bgColor = 'bg-orange-500';
+    }
+  }
 
   return (
     <motion.div

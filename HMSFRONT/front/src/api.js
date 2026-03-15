@@ -25,6 +25,7 @@ export const getCohorts = () => api.get('/api/teams/cohorts');
 export const getMyTeam = () => api.get('/api/teams/my-team');
 
 export const deleteReservation = (id) => api.delete(`/api/reservations/${id}`);
+export const checkInTable = (tableName) => api.patch(`/api/reservations/checkin/${tableName}`);
 
 export const getHackathonPosts = () => api.get('/api/hackathons');
 export const createHackathonPost = (data) => api.post('/api/hackathons', data);

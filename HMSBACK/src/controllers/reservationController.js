@@ -168,10 +168,52 @@ const deleteReservation = async (req, res) => {
     }
 };
 
+const checkIn = async (req, res) => {
+    try {
+        const { tableName } = req.params;
+        const username = req.user.username;
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        // Find an active reservation for this table and user
+        const reservation = await Reservation.findOne({
+            tableName,
+            username,
+            date: todayStr,
+            startTime: { $lte: currentTime },
+            endTime: { $gt: currentTime }
+        });
+
+        if (!reservation) {
+            return res.status(404).json({ 
+                status: false, 
+                message: "No active reservation found for this desk at this time. Please make sure you have booked it." 
+            });
+        }
+
+        if (reservation.status === "occupied") {
+            return res.status(200).json({ status: true, message: "Already checked in", data: reservation });
+        }
+
+        reservation.status = "occupied";
+        await reservation.save();
+
+        res.status(200).json({ 
+            status: true, 
+            message: "Successfully checked in! The desk is now marked as Occupied.",
+            data: reservation 
+        });
+    } catch (error) {
+        res.status(500).json({ status: false, message: error.message });
+    }
+};
+
 module.exports = {
     createReservation,
     getReservations,
     checkTableAvailability,
     getMyRecentReservations,
-    deleteReservation
+    deleteReservation,
+    checkIn
 };

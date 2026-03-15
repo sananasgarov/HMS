@@ -22,6 +22,11 @@ const reservationSchema = new mongoose.Schema({
     endTime: {
         type: String, // Format: HH:mm
         required: true
+    },
+    status: {
+        type: String,
+        enum: ["reserved", "occupied"],
+        default: "reserved"
     }
 }, {
     timestamps: true
