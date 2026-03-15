@@ -50,7 +50,13 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 const db = require("./src/db/index");
 app.use("/api", router);
-db();
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+db()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server is running on http://localhost:${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to database. Server not started.", err);
+    process.exit(1);
+  });
