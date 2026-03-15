@@ -30,8 +30,7 @@ const register = async (req, res) => {
         const newUser = await User.create({
             username,
             email,
-            password,
-            bufferCommands: false // Double disable at operation level
+            password
         });
 
         createTokenResponse(newUser, 201, res);
@@ -54,7 +53,7 @@ const login = async (req, res) => {
             });
         }
 
-        const user = await User.findOne({ email }).select("+password").setOptions({ bufferCommands: false });
+        const user = await User.findOne({ email }).select("+password");
 
         if (!user || !(await user.comparePassword(password, user.password))) {
             return res.status(401).json({
