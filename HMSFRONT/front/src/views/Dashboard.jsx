@@ -24,9 +24,18 @@ const Dashboard = () => {
   const [reservations, setReservations] = useState([]);
   const [recentRes, setRecentRes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterTime, setFilterTime] = useState(format(new Date(), 'HH:mm'));
+  const defaultStart = format(new Date(), 'HH:mm');
+  const [filterStartTime, setFilterStartTime] = useState(defaultStart);
+  
+  // Calculate default end time (+2 hours)
+  const defaultEndObj = new Date();
+  defaultEndObj.setHours(defaultEndObj.getHours() + 2);
+  const defaultEnd = format(defaultEndObj, 'HH:mm');
+  const [filterEndTime, setFilterEndTime] = useState(defaultEnd);
+
   const [showTeamMembers, setShowTeamMembers] = useState(false);
-  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [isStartTimePickerOpen, setIsStartTimePickerOpen] = useState(false);
+  const [isEndTimePickerOpen, setIsEndTimePickerOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchRes = async () => {
@@ -88,12 +97,14 @@ const Dashboard = () => {
     }
   };
 
+  // A desk is considered occupied if ANY reservation overlaps the selected time range.
+  // Overlap condition: res.startTime < filterEndTime && res.endTime > filterStartTime
   const stats = {
     available: tables.length - reservations.filter(r => {
-        return filterTime >= r.startTime && filterTime <= r.endTime;
+        return r.startTime < filterEndTime && r.endTime > filterStartTime;
     }).length,
     occupied: reservations.filter(r => {
-        return filterTime >= r.startTime && filterTime <= r.endTime;
+        return r.startTime < filterEndTime && r.endTime > filterStartTime;
     }).length
   };
 
@@ -155,47 +166,115 @@ const Dashboard = () => {
       {/* Filter Bar */}
       <div className="bg-white rounded-[2rem] p-4 md:p-6 card-shadow border border-slate-50 flex flex-col md:flex-row items-center gap-4">
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-            <div className="relative">
-                <button 
-                    onClick={() => setIsTimePickerOpen(!isTimePickerOpen)}
-                    className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-3 rounded-2xl w-full hover:border-primary-100 transition-all group"
-                >
-                    <Clock className="text-primary-400 group-hover:scale-110 transition-transform" size={18} />
-                    <span className="text-sm font-black text-slate-600">{filterTime}</span>
-                </button>
+            <div className="flex gap-2">
+                {/* Start Time Picker */}
+                <div className="relative flex-1">
+                    <button 
+                        onClick={() => {
+                            setIsStartTimePickerOpen(!isStartTimePickerOpen);
+                            setIsEndTimePickerOpen(false);
+                        }}
+                        className="flex items-center justify-center gap-2 bg-slate-50 border border-slate-100 px-3 py-3 rounded-2xl w-full hover:border-primary-100 transition-all group"
+                    >
+                        <Clock className="text-primary-400 group-hover:scale-110 transition-transform hidden sm:block" size={16} />
+                        <span className="text-sm font-black text-slate-600">{filterStartTime}</span>
+                    </button>
+                    
+                    <AnimatePresence>
+                        {isStartTimePickerOpen && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto p-2 scrollbar-thin"
+                            >
+                                {Array.from({ length: 48 }, (_, i) => {
+                                    const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                                    const min = (i % 2 === 0 ? '00' : '30');
+                                    const time = `${hour}:${min}`;
+                                    return (
+                                        <button 
+                                            key={time}
+                                            onClick={() => {
+                                                setFilterStartTime(time);
+                                                if (time >= filterEndTime) {
+                                                    const nextI = i < 47 ? i + 1 : 47;
+                                                    const nextHour = Math.floor(nextI / 2).toString().padStart(2, '0');
+                                                    const nextMin = (nextI % 2 === 0 ? '00' : '30');
+                                                    setFilterEndTime(`${nextHour}:${nextMin}`);
+                                                }
+                                                setIsStartTimePickerOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                                                filterStartTime === time 
+                                                ? 'bg-primary-50 text-primary-600' 
+                                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                            }`}
+                                        >
+                                            {time}
+                                        </button>
+                                    );
+                                })}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
                 
-                <AnimatePresence>
-                    {isTimePickerOpen && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto p-2 scrollbar-thin"
-                        >
-                            {Array.from({ length: 48 }, (_, i) => {
-                                const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                                const min = (i % 2 === 0 ? '00' : '30');
-                                const time = `${hour}:${min}`;
-                                return (
-                                    <button 
-                                        key={time}
-                                        onClick={() => {
-                                            setFilterTime(time);
-                                            setIsTimePickerOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                                            filterTime === time 
-                                            ? 'bg-primary-50 text-primary-600' 
-                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                                        }`}
-                                    >
-                                        {time}
-                                    </button>
-                                );
-                            })}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                <div className="flex items-center text-slate-300 font-bold">-</div>
+
+                {/* End Time Picker */}
+                <div className="relative flex-1">
+                    <button 
+                        onClick={() => {
+                            setIsEndTimePickerOpen(!isEndTimePickerOpen);
+                            setIsStartTimePickerOpen(false);
+                        }}
+                        className="flex items-center justify-center gap-2 bg-slate-50 border border-slate-100 px-3 py-3 rounded-2xl w-full hover:border-primary-100 transition-all group"
+                    >
+                        <Clock className="text-primary-400 group-hover:scale-110 transition-transform hidden sm:block" size={16} />
+                        <span className="text-sm font-black text-slate-600">{filterEndTime}</span>
+                    </button>
+                    
+                    <AnimatePresence>
+                        {isEndTimePickerOpen && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 max-h-60 overflow-y-auto p-2 scrollbar-thin"
+                            >
+                                {Array.from({ length: 48 }, (_, i) => {
+                                    const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                                    const min = (i % 2 === 0 ? '00' : '30');
+                                    const time = `${hour}:${min}`;
+                                    // Disable times before start time
+                                    const isDisabled = time <= filterStartTime;
+                                    return (
+                                        <button 
+                                            key={time}
+                                            onClick={() => {
+                                                if(!isDisabled){
+                                                    setFilterEndTime(time);
+                                                    setIsEndTimePickerOpen(false);
+                                                }
+                                            }}
+                                            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                                                isDisabled 
+                                                ? 'opacity-30 cursor-not-allowed text-slate-400'
+                                                : filterEndTime === time 
+                                                    ? 'bg-primary-50 text-primary-600' 
+                                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                            }`}
+                                            disabled={isDisabled}
+                                        >
+                                            {time}
+                                        </button>
+                                    );
+                                })}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
             
             <button 
@@ -246,13 +325,14 @@ const Dashboard = () => {
                       const tableRes = reservations.filter(r => r.tableName === tableId);
                       return (
                         <div key={tableId}>
-                          <TableCard 
-                            tableId={tableId}
-                            reservations={tableRes}
-                            filterTime={filterTime}
-                            showHighlight={showTeamMembers}
-                            onClick={id => { setSelectedTable(id); setIsModalOpen(true); }}
-                          />
+                            <TableCard 
+                              tableId={tableId}
+                              reservations={tableRes}
+                              filterStartTime={filterStartTime}
+                              filterEndTime={filterEndTime}
+                              showHighlight={showTeamMembers}
+                              onClick={id => { setSelectedTable(id); setIsModalOpen(true); }}
+                            />
                         </div>
                       );
                     })}
@@ -275,13 +355,14 @@ const Dashboard = () => {
                           const tableRes = reservations.filter(r => r.tableName === tableId);
                           return (
                             <div key={tableId}>
-                              <TableCard 
-                                tableId={tableId}
-                                reservations={tableRes}
-                                filterTime={filterTime}
-                                showHighlight={showTeamMembers}
-                                onClick={id => { setSelectedTable(id); setIsModalOpen(true); }}
-                              />
+                                <TableCard 
+                                  tableId={tableId}
+                                  reservations={tableRes}
+                                  filterStartTime={filterStartTime}
+                                  filterEndTime={filterEndTime}
+                                  showHighlight={showTeamMembers}
+                                  onClick={id => { setSelectedTable(id); setIsModalOpen(true); }}
+                                />
                             </div>
                           );
                         })}
@@ -295,7 +376,8 @@ const Dashboard = () => {
                              <div key={tId}>
                                <TableCard tableId={tId}
                                   reservations={tableRes}
-                                  filterTime={filterTime}
+                                  filterStartTime={filterStartTime}
+                                  filterEndTime={filterEndTime}
                                   showHighlight={showTeamMembers}
                                   onClick={id => { setSelectedTable(id); setIsModalOpen(true); }}
                                 />
@@ -312,13 +394,14 @@ const Dashboard = () => {
                           const tableRes = reservations.filter(r => r.tableName === tableId);
                           return (
                             <div key={tableId}>
-                              <TableCard 
-                                tableId={tableId}
-                                reservations={tableRes}
-                                filterTime={filterTime}
-                                showHighlight={showTeamMembers}
-                                onClick={id => { setSelectedTable(id); setIsModalOpen(true); }}
-                              />
+                                <TableCard 
+                                  tableId={tableId}
+                                  reservations={tableRes}
+                                  filterStartTime={filterStartTime}
+                                  filterEndTime={filterEndTime}
+                                  showHighlight={showTeamMembers}
+                                  onClick={id => { setSelectedTable(id); setIsModalOpen(true); }}
+                                />
                             </div>
                           );
                         })}
@@ -414,7 +497,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-slate-800">Who's at the Office?</h3>
                 <span className="text-[10px] font-black text-primary-500 bg-primary-50 px-2 py-1 rounded-md uppercase">
-                    {filterTime}
+                    {filterStartTime} - {filterEndTime}
                 </span>
             </div>
             

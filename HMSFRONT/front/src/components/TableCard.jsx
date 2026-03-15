@@ -1,11 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const TableCard = ({ tableId, reservations = [], filterTime, onClick, showHighlight }) => {
-  const currentTime = filterTime || (new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0'));
-  
+const TableCard = ({ tableId, reservations = [], filterStartTime, filterEndTime, onClick, showHighlight }) => {
+  const currentStart = filterStartTime || (new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0'));
+  const currentEnd = filterEndTime || currentStart;
+
+  // A reservation overlaps if it starts before the filter ends, AND it ends after the filter starts.
   const currentRes = reservations.find(res => 
-    currentTime >= res.startTime && currentTime <= res.endTime
+    res.startTime < currentEnd && res.endTime > currentStart
   );
 
   const isOccupied = !!currentRes;
