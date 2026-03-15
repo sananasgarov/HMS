@@ -137,15 +137,26 @@ const TableView = () => {
                         <div className="bg-white px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-primary-600 font-black font-mono border border-slate-100 shadow-sm text-xs md:text-base">
                            {res.startTime} - {res.endTime}
                         </div>
-                        {user?.username === res.username && (
-                          <button 
-                            onClick={() => handleCancel(res._id)}
-                            className="w-9 h-9 md:w-10 md:h-10 bg-rose-50 text-rose-500 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-100 flex-shrink-0"
-                            title="Cancel Reservation"
-                          >
-                            <XCircle size={16} className="md:w-[18px] md:h-[18px]" />
-                          </button>
-                        )}
+                        {user?.username === res.username && (() => {
+                          const now = new Date();
+                          const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                          const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                          
+                          // Check if the reservation has already started or passed
+                          const isStartedOrPassed = res.date < todayStr || (res.date === todayStr && res.startTime <= currentTime);
+                          
+                          if (isStartedOrPassed) return <div className="w-9 h-9 md:w-10 flex-shrink-0"></div>;
+                          
+                          return (
+                            <button 
+                              onClick={() => handleCancel(res._id)}
+                              className="w-9 h-9 md:w-10 md:h-10 bg-rose-50 text-rose-500 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-100 flex-shrink-0"
+                              title="Cancel Reservation"
+                            >
+                              <XCircle size={16} className="md:w-[18px] md:h-[18px]" />
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   </motion.div>

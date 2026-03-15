@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Flame, Sparkles, Loader2, User, Clock, Briefcase, Layout, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Flame, Sparkles, Loader2, User, Clock, Briefcase, Layout, Pencil, Trash2, Search } from 'lucide-react';
 import { getHackathonPosts, deleteHackathonPost } from '../api';
 import { formatDistanceToNow } from 'date-fns';
 import HackathonModal from '../components/HackathonModal';
@@ -12,6 +12,7 @@ const Hackathons = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchPosts = async () => {
     try {
@@ -59,13 +60,25 @@ const Hackathons = () => {
           <p className="text-slate-400 font-medium text-sm md:text-base mt-2">Connecting talent with amazing hackathon opportunities.</p>
         </div>
         
-        <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-primary-600 hover:bg-primary-700 text-white font-black px-8 py-4 md:py-5 rounded-2xl md:rounded-3xl transition-all shadow-xl shadow-primary-500/20 active:scale-95 flex items-center justify-center gap-3 text-sm md:text-base whitespace-nowrap"
-        >
-            <Plus size={20} />
-            Create Recruitment Post
-        </button>
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search hackathons, tags..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 md:py-5 text-sm font-bold text-slate-700 focus:outline-none focus:border-primary-400 transition-all shadow-sm"
+            />
+          </div>
+          <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-primary-600 hover:bg-primary-700 text-white font-black px-8 py-4 md:py-5 rounded-2xl md:rounded-3xl transition-all shadow-xl shadow-primary-500/20 active:scale-95 flex items-center justify-center gap-3 text-sm md:text-base w-full md:w-auto shrink-0"
+          >
+              <Plus size={20} />
+              Create Post
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto px-6 md:px-12 pb-12 scrollbar-hide">
@@ -91,11 +104,19 @@ const Hackathons = () => {
         ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6 md:gap-8">
                 <AnimatePresence mode='popLayout'>
-                    {posts.map((post, idx) => (
+                    {posts.filter(post => {
+                        const q = searchQuery.toLowerCase();
+                        return (
+                            post.title?.toLowerCase().includes(q) ||
+                            post.description?.toLowerCase().includes(q) ||
+                            post.requiredSkills?.some(skill => skill.toLowerCase().includes(q))
+                        );
+                    }).map((post, idx) => (
                         <motion.div
                             key={post._id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
                             transition={{ delay: idx * 0.05 }}
                             className="bg-white p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] card-shadow border border-slate-50 group hover:border-primary-200 transition-all hover:-translate-y-2 flex flex-col relative overflow-hidden"
                         >
