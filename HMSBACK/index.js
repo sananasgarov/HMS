@@ -11,7 +11,7 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
-app.use(express.json({ limit: '10kb' })); 
+app.use(express.json({ limit: '10kb' }));
 // app.use(xss()); // Removed due to incompatibility with Express 5
 
 const helmet = require('helmet');
@@ -21,17 +21,17 @@ const hpp = require('hpp');
 const rateLimit = require('express-rate-limit');
 
 app.use(helmet({
-  crossOriginResourcePolicy: false, 
+  crossOriginResourcePolicy: false,
 }));
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 300, 
+  windowMs: 15 * 60 * 1000,
+  max: 300,
   message: 'Həddindən artıq müraciət edildi. Zəhmət olmasa bir az sonra yenidən cəhd edin.',
-  standardHeaders: true, 
+  standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api', limiter); 
+app.use('/api', limiter);
 
 app.use((req, res, next) => {
   if (req.body) req.body = mongoSanitize.sanitize(req.body, { replaceWith: '_' });
@@ -49,26 +49,8 @@ app.use(hpp());
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 const db = require("./src/db/index");
-
-// Global Middleware to ensure DB is connected before processing any /api request
-app.use('/api', async (req, res, next) => {
-  try {
-    await db();
-    next();
-  } catch (err) {
-    res.status(500).json({ 
-      status: false, 
-      message: "Database connection failed. Please check IP whitelist and credentials.",
-      error: err.message 
-    });
-  }
-});
-
 app.use("/api", router);
-
-// Connect once on server startup (for local development)
-db().catch(err => console.error("Initial DB connection failed:", err.message));
-
+db();
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
