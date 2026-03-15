@@ -49,8 +49,26 @@ app.use(hpp());
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 const db = require("./src/db/index");
+
+// Global Middleware to ensure DB is connected before processing any /api request
+app.use('/api', async (req, res, next) => {
+  try {
+    await db();
+    next();
+  } catch (err) {
+    res.status(500).json({ 
+      status: false, 
+      message: "Database connection failed. Please check IP whitelist and credentials.",
+      error: err.message 
+    });
+  }
+});
+
 app.use("/api", router);
-db();
+
+// Connect once on server startup (for local development)
+db().catch(err => console.error("Initial DB connection failed:", err.message));
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
